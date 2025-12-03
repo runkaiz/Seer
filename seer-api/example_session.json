@@ -1,0 +1,47 @@
+{
+  "note": "This is an example of what your anime history JSON file should look like.",
+  "usage": "Send this entire anime_history array in the 'anime_history' field of your POST /api/recommend request",
+  "anime_history": [
+    {
+      "mal_id": 1,
+      "title": "Cowboy Bebop",
+      "genres": ["Action", "Adventure", "Drama", "Sci-Fi"],
+      "studios": ["Sunrise"],
+      "episodes": 26,
+      "score": "8.75",
+      "synopsis": "Crime is timeless. By the year 2071, humanity has expanded across the galaxy...",
+      "has_seen": true,
+      "rating": "positive"
+    },
+    {
+      "mal_id": 5,
+      "title": "Fullmetal Alchemist: Brotherhood",
+      "genres": ["Action", "Adventure", "Drama", "Fantasy"],
+      "studios": ["Bones"],
+      "episodes": 64,
+      "score": "9.09",
+      "synopsis": "After a horrific alchemy experiment goes wrong in the Elric household...",
+      "has_seen": true,
+      "rating": "positive"
+    },
+    {
+      "mal_id": 820,
+      "title": "Ginga Eiyuu Densetsu",
+      "genres": ["Drama", "Sci-Fi"],
+      "studios": ["Artland"],
+      "episodes": 110,
+      "score": "9.03",
+      "synopsis": "The 150-year-long stalemate between the two interstellar superpowers...",
+      "has_seen": true,
+      "rating": "positive"
+    }
+  ],
+  "instructions": {
+    "first_time_user": "Start with at least one anime (your favorite) in the anime_history array. It should be the FIRST item.",
+    "adding_recommendation": "After receiving a recommendation, add it to this array with your rating",
+    "rating_options": ["positive", "neutral", "negative"],
+    "required_fields": ["mal_id", "title", "has_seen"],
+    "recommended_fields": ["genres", "studios", "episodes", "score", "synopsis", "media_type", "watch_status", "source"],
+    "note": "More complete metadata = better recommendations!"
+  }
+}

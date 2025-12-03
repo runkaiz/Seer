@@ -1,0 +1,5 @@
+AI used for styling the frontend, code formatting, and documentation generation.
+
+AI has also been used to generate the first draft of README.md.
+
+AI used for generating comments in the codebase.
