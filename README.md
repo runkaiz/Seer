@@ -46,61 +46,99 @@ This project consists of two main components:
   - Recommendation explanations
   - Genre diversity encouragement
 
-## 🚀 Getting Started
+## 🚀 Quick Start Options
 
-### Prerequisites
+### Option 1: Railway Deployment
 
-- **Node.js 18+** or **pnpm** (for frontend)
-- **Python 3.10+** (for backend)
+**Live Demo:** [Your Railway URL will be here after deployment]
+
+The easiest way to test this application is via the deployed Railway instance. Simply visit the URL above - no setup required!
+
+If you'd like to deploy your own instance:
+
+1. **Fork/Clone this repository**
+
+2. **Create a Railway account** at [railway.app](https://railway.app)
+
+3. **Deploy to Railway:**
+   - Click "New Project" → "Deploy from GitHub repo"
+   - Select this repository
+   - Railway will automatically detect the configuration
+
+4. **Set Environment Variables** in Railway dashboard:
+   ```
+   OPENAI_API_KEY=your_openai_api_key
+   MAL_CLIENT_ID=your_mal_client_id
+   ```
+
+5. **Deploy!** Railway will:
+   - Build the SvelteKit frontend
+   - Install Python dependencies
+   - Serve everything from a single URL
+
+**Note:** The monorepo deployment serves both frontend and backend from one service. The backend serves the built SvelteKit app at the root path, and API endpoints are available at `/api/*`.
+
+---
+
+### Option 2: Local Development Setup
+
+For local development and testing:
+
+#### Prerequisites
+
+- **Node.js 18+** (install pnpm: `npm install -g pnpm`)
+- **Python 3.10+**
 - **OpenAI API Key** ([Get one here](https://platform.openai.com/api-keys))
 - **MyAnimeList Client ID** ([Register here](https://myanimelist.net/apiconfig))
 
-### Quick Setup
-
-#### 1. Clone the Repository
+#### Setup
 
 ```bash
-git clone [your-repo-url]
-cd "HCDE 310 Final"
-```
-
-#### 2. Backend Setup
-
-```bash
+# 1. Backend setup
 cd seer-api
-
-# Create virtual environment
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Configure environment
 cp .env.example .env
-# Edit .env and add your API keys:
-# OPENAI_API_KEY=your_key_here
-# MAL_CLIENT_ID=your_client_id_here
+# Edit .env and add your OPENAI_API_KEY and MAL_CLIENT_ID
 
-# Start the backend
+# 2. Frontend setup (in a new terminal)
+cd seer
+pnpm install
+```
+
+#### Run Locally (Development Mode)
+
+Start both servers in separate terminals:
+
+```bash
+# Terminal 1: Backend
+cd seer-api && source venv/bin/activate && python run.py
+
+# Terminal 2: Frontend
+cd seer && pnpm run dev
+```
+
+Open `http://localhost:5173` in your browser.
+
+#### Run Locally (Production Mode - Test Railway Build)
+
+To test how the application will run on Railway:
+
+```bash
+# 1. Build the frontend
+cd seer
+pnpm install
+pnpm run build
+
+# 2. Start the backend (which serves the built frontend)
+cd ../seer-api
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
 python run.py
 ```
 
-The API will be available at `http://localhost:8000`
-
-#### 3. Frontend Setup
-
-```bash
-cd seer
-
-# Install dependencies
-pnpm install
-
-# Start development server
-pnpm run dev
-```
-
-The app will be available at `http://localhost:5173`
+Open `http://localhost:8000` in your browser.
 
 ### Getting API Keys
 
@@ -151,26 +189,10 @@ const API_BASE_URL = 'http://localhost:8000/api';
 
 ## 🧪 Development
 
-### Frontend Development
+### API Documentation
 
-```bash
-cd seer
-
-# Test with a live server
-pnpm dev
-```
-
-### Backend Development
-
-```bash
-cd seer-api
-
-# Run with auto-reload
-python run.py
-
-# View API docs
-# Visit http://localhost:8000/docs
-```
+- **Local Development:** `http://localhost:8000/docs`
+- **Railway Deployment:** `https://your-railway-url.up.railway.app/docs`
 
 ## 📜 License
 

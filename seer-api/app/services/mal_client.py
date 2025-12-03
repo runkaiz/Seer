@@ -2,8 +2,11 @@
 MyAnimeList API client for fetching anime data.
 Official API documentation: https://myanimelist.net/apiconfig/references/api/v2
 """
+
+from typing import Any, Dict, List, Optional
+
 import httpx
-from typing import Optional, List, Dict, Any
+
 from app.config import get_settings
 
 
@@ -14,9 +17,7 @@ class MALClient:
 
     def __init__(self, client_id: str):
         self.client_id = client_id
-        self.headers = {
-            "X-MAL-CLIENT-ID": client_id
-        }
+        self.headers = {"X-MAL-CLIENT-ID": client_id}
 
     async def search_anime(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
         """
@@ -29,16 +30,13 @@ class MALClient:
         Returns:
             List of anime search results
         """
+        fields = "id,title,main_picture,synopsis,mean,rank,popularity,genres,num_episodes,media_type,studios,source"
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{self.BASE_URL}/anime",
                 headers=self.headers,
-                params={
-                    "q": query,
-                    "limit": limit,
-                    "fields": "id,title,main_picture,alternative_titles"
-                },
-                timeout=10.0
+                params={"q": query, "limit": limit, "fields": fields},
+                timeout=10.0,
             )
             response.raise_for_status()
             data = response.json()
@@ -54,42 +52,21 @@ class MALClient:
         Returns:
             Detailed anime information including genres, studios, etc.
         """
-        fields = [
-            "id",
-            "title",
-            "main_picture",
-            "alternative_titles",
-            "synopsis",
-            "mean",
-            "rank",
-            "popularity",
-            "num_list_users",
-            "num_scoring_users",
-            "media_type",
-            "status",
-            "genres",
-            "num_episodes",
-            "start_season",
-            "source",
-            "average_episode_duration",
-            "rating",
-            "studios",
-            "related_anime",
-            "recommendations",
-            "statistics"
-        ]
+        fields = "id,title,synopsis,mean,rank,popularity,genres,num_episodes,media_type,studios,source,rating,recommendations"
 
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{self.BASE_URL}/anime/{anime_id}",
                 headers=self.headers,
-                params={"fields": ",".join(fields)},
-                timeout=10.0
+                params={"fields": fields},
+                timeout=10.0,
             )
             response.raise_for_status()
             return response.json()
 
-    async def get_anime_recommendations(self, anime_id: int, limit: int = 10) -> List[Dict[str, Any]]:
+    async def get_anime_recommendations(
+        self, anime_id: int, limit: int = 10
+    ) -> List[Dict[str, Any]]:
         """
         Get MAL's recommended anime for a given anime.
 
@@ -108,10 +85,7 @@ class MALClient:
         return recommendations
 
     async def search_by_genre(
-        self,
-        genre_ids: List[int],
-        limit: int = 10,
-        min_score: float = 7.0
+        self, genre_ids: List[int], limit: int = 10, min_score: float = 7.0
     ) -> List[Dict[str, Any]]:
         """
         Search for anime by genre.
@@ -126,22 +100,20 @@ class MALClient:
         Returns:
             List of anime matching criteria
         """
-        # This is a placeholder - MAL API v2 has limited filtering capabilities
-        # In a production system, you'd want to fetch ranking lists and filter
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{self.BASE_URL}/anime/ranking",
                 headers=self.headers,
                 params={
                     "ranking_type": "all",
-                    "limit": limit * 2,  # Fetch more to filter
-                    "fields": "id,title,mean,genres,num_episodes,synopsis,studios"
+                    "limit": limit,
+                    "fields": "id,title,mean,rank,popularity,genres,num_episodes,synopsis,studios,media_type,source,rating",
                 },
-                timeout=10.0
+                timeout=10.0,
             )
             response.raise_for_status()
             data = response.json()
-            return data.get("data", [])[:limit]
+            return data.get("data", [])
 
     def extract_metadata(self, anime_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -157,17 +129,28 @@ class MALClient:
         if "node" in anime_data:
             anime_data = anime_data["node"]
 
+        # Extract image URL (prefer medium size, fallback to large)
+        image_url = None
+        if "main_picture" in anime_data and anime_data["main_picture"]:
+            main_picture = anime_data["main_picture"]
+            image_url = main_picture.get("medium") or main_picture.get("large")
+
         return {
             "mal_id": anime_data.get("id"),
             "title": anime_data.get("title", ""),
             "genres": [g.get("name", "") for g in anime_data.get("genres", [])],
             "studios": [s.get("name", "") for s in anime_data.get("studios", [])],
             "episodes": anime_data.get("num_episodes"),
-            "score": str(anime_data.get("mean", "N/A")) if anime_data.get("mean") else "N/A",
+            "score": str(anime_data.get("mean", "N/A"))
+            if anime_data.get("mean")
+            else "N/A",
             "synopsis": anime_data.get("synopsis", ""),
             "media_type": anime_data.get("media_type", ""),
             "rating": anime_data.get("rating", ""),
             "source": anime_data.get("source", ""),
+            "image_url": image_url,
+            "rank": anime_data.get("rank"),
+            "popularity": anime_data.get("popularity"),
         }
 
 

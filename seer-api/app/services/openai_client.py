@@ -17,84 +17,6 @@ class OpenAIRecommendationClient:
         self.client = AsyncOpenAI(api_key=api_key)
         self.model = model
 
-    async def extract_preferences(
-        self, anime_history: List[Dict[str, Any]], initial_anime: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Analyze user's anime history to extract preference patterns.
-
-        Args:
-            anime_history: List of anime the user has interacted with (includes ratings)
-            initial_anime: The anime that started the session
-
-        Returns:
-            Structured preference profile
-        """
-        # Build context about user's history
-        history_context = self._build_history_context(anime_history)
-
-        initial_details = []
-        genres = ", ".join(initial_anime.get("genres", []))
-        studios = ", ".join(initial_anime.get("studios", []))
-
-        if genres:
-            initial_details.append(f"- Genres: {genres}")
-        if studios:
-            initial_details.append(f"- Studios: {studios}")
-
-        meta_bits = []
-        if initial_anime.get("media_type"):
-            meta_bits.append(f"Format: {initial_anime['media_type']}")
-        if initial_anime.get("episodes"):
-            meta_bits.append(f"Episodes: {initial_anime['episodes']}")
-        if initial_anime.get("score"):
-            meta_bits.append(f"MAL Score: {initial_anime['score']}")
-        if initial_anime.get("source"):
-            meta_bits.append(f"Source: {initial_anime['source']}")
-        if meta_bits:
-            initial_details.append("- " + " | ".join(meta_bits))
-
-        synopsis = initial_anime.get("synopsis", "N/A") or "N/A"
-        initial_details.append(f"- Synopsis: {synopsis[:200]}")
-
-        initial_block = "\n".join(initial_details)
-
-        prompt = f"""You are an anime recommendation expert. Analyze the user's anime viewing history to extract their preferences.
-
-Initial favorite anime: {initial_anime.get("title", "Unknown")}
-{initial_block}
-
-User's interaction history:
-{history_context}
-
-Based on this data, extract a preference profile in JSON format with these fields:
-- preferred_genres: List of genres the user seems to enjoy
-- avoided_genres: List of genres they dislike or want to avoid
-- preferred_episode_range: Typical episode count they prefer (e.g., "12-24", "1-cour", "long-running")
-- content_notes: Brief notes about their preferences (pacing, tone, art style, etc.)
-
-Return ONLY the JSON object, no additional text."""
-
-        response = await self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are an anime expert that analyzes viewing patterns.",
-                },
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0.3,
-            response_format={"type": "json_object"},
-        )
-
-        try:
-            preferences = json.loads(response.choices[0].message.content)
-            return preferences
-        except json.JSONDecodeError:
-            # Fallback to basic preferences
-            return self._create_fallback_preferences(initial_anime)
-
     async def rank_for_similar(
         self,
         candidates: List[Dict[str, Any]],
@@ -360,17 +282,6 @@ Return ONLY the JSON object."""
             lines.append(f"   Synopsis: {synopsis[:200]}...")
 
         return "\n".join(lines)
-
-    def _create_fallback_preferences(
-        self, initial_anime: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Create a basic preference profile from the initial anime."""
-        return {
-            "preferred_genres": initial_anime.get("genres", []),
-            "avoided_genres": [],
-            "preferred_episode_range": "12-24",
-            "content_notes": f"Started with {initial_anime.get('title', 'unknown anime')}",
-        }
 
 
 def get_openai_client() -> OpenAIRecommendationClient:

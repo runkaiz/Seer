@@ -21,7 +21,13 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # CORS
-    allowed_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    allowed_origins: list[str] = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:8000",
+        # Railway will inject the deployed URL, add it manually if needed
+        # Example: "https://your-app.up.railway.app"
+    ]
 
     # OpenAI Settings
     openai_model: str = "gpt-5-thinking"

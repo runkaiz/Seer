@@ -7,7 +7,9 @@ Supports two modes:
 
 Author: Runkai Zhang
 """
-from typing import Dict, Any, List, Optional
+
+from typing import Any, Dict, List, Optional
+
 from app.schemas import AnimeHistoryItem, RecommendationMode
 from app.services.mal_client import MALClient
 from app.services.openai_client import OpenAIRecommendationClient
@@ -21,7 +23,9 @@ class RecommendationEngine:
     All state is passed in via anime_history parameter - no database required.
     """
 
-    def __init__(self, mal_client: MALClient, openai_client: OpenAIRecommendationClient):
+    def __init__(
+        self, mal_client: MALClient, openai_client: OpenAIRecommendationClient
+    ):
         self.mal_client = mal_client
         self.openai_client = openai_client
 
@@ -76,26 +80,22 @@ class RecommendationEngine:
             recommendation = await self.openai_client.rank_for_similar(
                 candidates=candidates,
                 anime_history=history_dicts,
-                seen_anime_ids=blocked_ids
+                seen_anime_ids=blocked_ids,
             )
         else:  # EXPLORE mode
             recommendation = await self.openai_client.rank_for_discovery(
                 candidates=candidates,
                 anime_history=history_dicts,
-                seen_anime_ids=blocked_ids
+                seen_anime_ids=blocked_ids,
             )
 
         if not recommendation:
             raise ValueError("Could not generate recommendation. Please try again.")
 
-        return {
-            "recommendation": recommendation
-        }
+        return {"recommendation": recommendation}
 
     async def _gather_diverse_candidates(
-        self,
-        history_dicts: List[Dict[str, Any]],
-        seen_ids: List[int]
+        self, history_dicts: List[Dict[str, Any]], seen_ids: List[int]
     ) -> List[Dict[str, Any]]:
         """
         Gather diverse candidates prioritizing discovery over comfort zone.
@@ -111,34 +111,38 @@ class RecommendationEngine:
         """
         candidates = []
         seen_ids_set = set(seen_ids)
-
-        # Get liked anime
         liked_anime = [h for h in history_dicts if h.get("user_rating") == "positive"]
 
-        # Strategy 1: Some familiar - recommendations from most recent liked anime (33%)
+        # Strategy 1: Familiar - recommendations from most recent liked anime (33%)
         if liked_anime:
             most_recent = liked_anime[-1]
-            recs = await self.mal_client.get_anime_recommendations(most_recent["mal_id"], limit=4)
+            recs = await self.mal_client.get_anime_recommendations(
+                most_recent["mal_id"], limit=4
+            )
             for rec in recs:
                 anime_id = rec.get("node", {}).get("id")
-                if anime_id and anime_id not in seen_ids_set:
-                    if not any(c["mal_id"] == anime_id for c in candidates):
-                        details = await self.mal_client.get_anime_details(anime_id)
-                        candidates.append(self.mal_client.extract_metadata(details))
-                        if len(candidates) >= 4:
-                            break
+                if (
+                    anime_id
+                    and anime_id not in seen_ids_set
+                    and not any(c["mal_id"] == anime_id for c in candidates)
+                ):
+                    details = await self.mal_client.get_anime_details(anime_id)
+                    candidates.append(self.mal_client.extract_metadata(details))
+                    if len(candidates) >= 4:
+                        break
 
         # Strategy 2: Exploratory - high-rated anime from MAL rankings (67%)
-        # This introduces diversity by not filtering by user preferences
-        ranking = await self.mal_client.search_by_genre([], limit=20)
+        ranking = await self.mal_client.search_by_genre([], limit=12)
         for item in ranking:
             anime_id = item.get("node", {}).get("id")
-            if anime_id and anime_id not in seen_ids_set:
-                if not any(c["mal_id"] == anime_id for c in candidates):
-                    metadata = self.mal_client.extract_metadata(item)
-                    candidates.append(metadata)
-                    if len(candidates) >= 12:
-                        break
+            if (
+                anime_id
+                and anime_id not in seen_ids_set
+                and not any(c["mal_id"] == anime_id for c in candidates)
+            ):
+                candidates.append(self.mal_client.extract_metadata(item))
+                if len(candidates) >= 12:
+                    break
 
         return candidates
 
@@ -163,6 +167,9 @@ class RecommendationEngine:
             "media_type": item.media_type,
             "source": item.source,
             "watch_status": item.watch_status,
+            "image_url": item.image_url,
+            "rank": item.rank,
+            "popularity": item.popularity,
             "user_seen": item.has_seen,
-            "user_rating": item.rating.value if item.rating else None
+            "user_rating": item.rating.value if item.rating else None,
         }

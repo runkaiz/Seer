@@ -136,16 +136,7 @@ async def search_anime(
     """
     try:
         results = await mal_client.search_anime(query, limit=limit)
-
-        # Enrich results with full details
-        enriched_results = []
-        for result in results:
-            anime_id = result.get("node", {}).get("id")
-            if anime_id:
-                details = await mal_client.get_anime_details(anime_id)
-                metadata = mal_client.extract_metadata(details)
-                enriched_results.append(metadata)
-
+        enriched_results = [mal_client.extract_metadata(result) for result in results]
         return {"results": enriched_results}
 
     except Exception as e:

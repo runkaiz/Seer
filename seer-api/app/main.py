@@ -3,8 +3,13 @@ Main FastAPI application entry point.
 
 Author: Runkai Zhang
 """
+
+import os
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.routers import recommendations
@@ -35,24 +40,31 @@ app.add_middleware(
 app.include_router(recommendations.router)
 
 
-@app.get("/", tags=["root"])
+@app.get("/api", tags=["root"])
 async def root():
-    """Root endpoint with API information."""
+    """API root endpoint with information."""
     return {
         "message": "Welcome to the Anime Recommendation API (Stateless)",
         "version": "2.0.0",
         "description": "No accounts needed - manage your recommendations with a local JSON file!",
         "docs": "/docs",
         "health": "/api/health",
-        "main_endpoint": "/api/recommend"
+        "main_endpoint": "/api/recommend",
     }
+
+
+# Serve SvelteKit frontend (built files)
+# In production, the frontend should be built and available in ../seer/build
+frontend_build_dir = Path(__file__).parent.parent.parent / "seer" / "build"
+
+if frontend_build_dir.exists():
+    # Mount static files for assets
+    app.mount(
+        "/", StaticFiles(directory=str(frontend_build_dir), html=True), name="frontend"
+    )
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=settings.debug
-    )
+
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=settings.debug)

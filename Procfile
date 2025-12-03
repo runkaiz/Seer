@@ -1,0 +1,1 @@
+web: cd seer-api && uvicorn app.main:app --host 0.0.0.0 --port $PORT

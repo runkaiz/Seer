@@ -1,0 +1,41 @@
+# Node
+node_modules/
+npm-debug.log
+.pnpm-debug.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# SvelteKit
+.svelte-kit/
+build/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# Testing
+coverage/
+.pytest_cache/
+
+# Misc
+*.log
