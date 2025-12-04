@@ -5,6 +5,20 @@
     let rateLimitInfo = $state<RateLimitInfo | null>(null);
     let timeUntilReset = $state<string>("");
     let interval: ReturnType<typeof setInterval> | null = null;
+    const showResetTimer = $derived(
+        !!rateLimitInfo && rateLimitInfo.remaining < rateLimitInfo.limit,
+    );
+    const statusText = $derived(
+        rateLimitInfo
+            ? `${rateLimitInfo.remaining}/${rateLimitInfo.limit} requests`
+            : "API status: no response",
+    );
+    const statusTitle = $derived(
+        rateLimitInfo
+            ? "API rate limit status"
+            : "No API response detected; service may be offline",
+    );
+    const statusIcon = $derived(rateLimitInfo ? getStatusIcon() : "⚠");
 
     function updateRateLimitInfo() {
         rateLimitInfo = getRateLimitInfo();
@@ -78,17 +92,13 @@
     }
 </script>
 
-{#if rateLimitInfo}
-    <div
-        class={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${getStatusColor()}`}
-        title="API rate limit status"
-    >
-        <span>{getStatusIcon()}</span>
-        <span>
-            {rateLimitInfo.remaining}/{rateLimitInfo.limit} requests
-        </span>
-        {#if rateLimitInfo.remaining < rateLimitInfo.limit}
-            <span class="opacity-75">• {timeUntilReset}</span>
-        {/if}
-    </div>
-{/if}
+<div
+    class={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${getStatusColor()}`}
+    title={statusTitle}
+>
+    <span>{statusIcon}</span>
+    <span>{statusText}</span>
+    {#if showResetTimer}
+        <span class="opacity-75">• {timeUntilReset}</span>
+    {/if}
+</div>
