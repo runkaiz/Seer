@@ -25,8 +25,7 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://localhost:3000",
         "http://localhost:8000",
-        # Railway will inject the deployed URL, add it manually if needed
-        # Example: "https://your-app.up.railway.app"
+        "https://seer.up.railway.app",
     ]
 
     # OpenAI Settings
