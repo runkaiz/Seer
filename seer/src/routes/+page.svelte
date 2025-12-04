@@ -110,11 +110,15 @@
             currentRecommendation = response.recommendation;
             preferenceProfile = response.preference_profile ?? null;
             view = "recommendation";
-        } catch (err) {
-            error =
-                err instanceof Error
-                    ? err.message
-                    : "Failed to get recommendation";
+        } catch (err: any) {
+            // Extract detailed error message from APIError
+            if (err.detail) {
+                error = err.detail;
+            } else if (err.message) {
+                error = err.message;
+            } else {
+                error = "Failed to get recommendation";
+            }
             console.error("Recommendation error:", err);
         } finally {
             isLoading = false;

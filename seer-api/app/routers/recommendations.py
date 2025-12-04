@@ -118,9 +118,22 @@ async def recommend_anime(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
+        # Log the full error for debugging
+        import traceback
+
+        print(f"Error generating recommendation: {str(e)}")
+        print(traceback.format_exc())
+
+        # Return user-friendly error message
+        error_msg = str(e)
+        if "openai" in str(type(e).__module__).lower():
+            error_msg = f"OpenAI API error: {str(e)}"
+        elif "mal" in str(e).lower() or "myanimelist" in str(e).lower():
+            error_msg = f"MyAnimeList API error: {str(e)}"
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate recommendation: {str(e)}",
+            detail=error_msg,
         )
 
 
