@@ -31,11 +31,25 @@ export interface RateLimitInfo {
   reset: number;
 }
 
+export type ApiStatus = {
+  status: "unknown" | "ok" | "error";
+  updatedAt: number;
+};
+
 // Store for rate limit info
 let currentRateLimitInfo: RateLimitInfo | null = null;
+let currentApiStatus: ApiStatus = { status: "unknown", updatedAt: 0 };
 
 export function getRateLimitInfo(): RateLimitInfo | null {
   return currentRateLimitInfo;
+}
+
+export function getApiStatus(): ApiStatus {
+  return currentApiStatus;
+}
+
+function setApiStatus(status: ApiStatus["status"]) {
+  currentApiStatus = { status, updatedAt: Date.now() };
 }
 
 function parseRateLimitHeaders(headers: Headers): RateLimitInfo | null {
@@ -60,23 +74,31 @@ export async function searchAnime(
   query: string,
   limit: number = 5,
 ): Promise<SearchResponse> {
-  const params = new URLSearchParams({
-    query,
-    limit: limit.toString(),
-  });
+  try {
+    const params = new URLSearchParams({
+      query,
+      limit: limit.toString(),
+    });
 
-  const response = await fetch(`${API_BASE_URL}/search?${params}`);
+    const response = await fetch(`${API_BASE_URL}/search?${params}`);
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new APIError(
-      "Failed to search anime",
-      response.status,
-      error.detail || response.statusText,
-    );
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      setApiStatus("error");
+      throw new APIError(
+        "Failed to search anime",
+        response.status,
+        error.detail || response.statusText,
+      );
+    }
+
+    setApiStatus("ok");
+
+    return response.json();
+  } catch (err) {
+    setApiStatus("error");
+    throw err;
   }
-
-  return response.json();
 }
 
 /**
@@ -87,34 +109,42 @@ export async function getRecommendation(
   mode: RecommendationMode,
   excludeIds: number[] = [],
 ): Promise<RecommendResponse> {
-  const response = await fetch(`${API_BASE_URL}/recommend`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      anime_history: animeHistory,
-      mode,
-      exclude_ids: excludeIds,
-    }),
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/recommend`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        anime_history: animeHistory,
+        mode,
+        exclude_ids: excludeIds,
+      }),
+    });
 
-  // Parse and store rate limit info
-  const rateLimitInfo = parseRateLimitHeaders(response.headers);
-  if (rateLimitInfo) {
-    currentRateLimitInfo = rateLimitInfo;
+    // Parse and store rate limit info
+    const rateLimitInfo = parseRateLimitHeaders(response.headers);
+    if (rateLimitInfo) {
+      currentRateLimitInfo = rateLimitInfo;
+    }
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      setApiStatus("error");
+      throw new APIError(
+        "Failed to get recommendation",
+        response.status,
+        error.detail || response.statusText,
+      );
+    }
+
+    setApiStatus("ok");
+
+    return response.json();
+  } catch (err) {
+    setApiStatus("error");
+    throw err;
   }
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new APIError(
-      "Failed to get recommendation",
-      response.status,
-      error.detail || response.statusText,
-    );
-  }
-
-  return response.json();
 }
 
 /**

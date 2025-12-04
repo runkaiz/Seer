@@ -1,29 +1,61 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import { getRateLimitInfo, type RateLimitInfo } from "$lib/api";
+    import {
+        getApiStatus,
+        getRateLimitInfo,
+        type ApiStatus,
+        type RateLimitInfo,
+    } from "$lib/api";
 
     let rateLimitInfo = $state<RateLimitInfo | null>(null);
+    let apiStatus = $state<ApiStatus | null>(null);
     let timeUntilReset = $state<string>("");
     let interval: ReturnType<typeof setInterval> | null = null;
     const showResetTimer = $derived(
         !!rateLimitInfo && rateLimitInfo.remaining < rateLimitInfo.limit,
     );
-    const statusText = $derived(
-        rateLimitInfo
-            ? `${rateLimitInfo.remaining}/${rateLimitInfo.limit} requests`
-            : "API status: no response",
-    );
-    const statusTitle = $derived(
-        rateLimitInfo
-            ? "API rate limit status"
-            : "No API response detected; service may be offline",
-    );
-    const statusIcon = $derived(rateLimitInfo ? getStatusIcon() : "⚠");
+    const statusText = $derived(() => {
+        if (rateLimitInfo) {
+            return `${rateLimitInfo.remaining}/${rateLimitInfo.limit} requests`;
+        }
+        if (apiStatus?.status === "ok") return "API connected";
+        if (apiStatus?.status === "error") return "API error";
+        return "API status: waiting";
+    });
+    const statusTitle = $derived(() => {
+        if (rateLimitInfo) return "API rate limit status";
+        if (apiStatus?.status === "ok")
+            return "API responded successfully (no limit data provided)";
+        if (apiStatus?.status === "error")
+            return "Recent API request failed; check backend";
+        return "Awaiting API response";
+    });
+    const statusIcon = $derived(() => {
+        if (rateLimitInfo) {
+            const percentage =
+                (rateLimitInfo.remaining / rateLimitInfo.limit) * 100;
 
-    function updateRateLimitInfo() {
+            if (percentage > 50) {
+                return "✓";
+            } else if (percentage > 25) {
+                return "⚠";
+            } else {
+                return "⚠";
+            }
+        }
+
+        if (apiStatus?.status === "ok") return "✓";
+        if (apiStatus?.status === "error") return "⚠";
+        return "ⓘ";
+    });
+
+    function updateIndicatorInfo() {
         rateLimitInfo = getRateLimitInfo();
+        apiStatus = getApiStatus();
         if (rateLimitInfo) {
             updateTimeUntilReset();
+        } else {
+            timeUntilReset = "";
         }
     }
 
@@ -44,10 +76,10 @@
     }
 
     onMount(() => {
-        updateRateLimitInfo();
+        updateIndicatorInfo();
         // Update every 10 seconds
         interval = setInterval(() => {
-            updateRateLimitInfo();
+            updateIndicatorInfo();
         }, 10000);
     });
 
@@ -59,36 +91,30 @@
 
     $effect(() => {
         // Update immediately when rate limit info changes
-        updateRateLimitInfo();
+        updateIndicatorInfo();
     });
 
     function getStatusColor() {
-        if (!rateLimitInfo)
-            return "bg-slate-100 text-slate-600 dark:bg-slate-800/70 dark:text-slate-200";
-        const percentage =
-            (rateLimitInfo.remaining / rateLimitInfo.limit) * 100;
+        if (rateLimitInfo) {
+            const percentage =
+                (rateLimitInfo.remaining / rateLimitInfo.limit) * 100;
 
-        if (percentage > 50) {
+            if (percentage > 50) {
+                return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300";
+            } else if (percentage > 25) {
+                return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300";
+            } else {
+                return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
+            }
+        }
+
+        if (apiStatus?.status === "ok") {
             return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300";
-        } else if (percentage > 25) {
-            return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300";
-        } else {
+        }
+        if (apiStatus?.status === "error") {
             return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
         }
-    }
-
-    function getStatusIcon() {
-        if (!rateLimitInfo) return "ⓘ";
-        const percentage =
-            (rateLimitInfo.remaining / rateLimitInfo.limit) * 100;
-
-        if (percentage > 50) {
-            return "✓";
-        } else if (percentage > 25) {
-            return "⚠";
-        } else {
-            return "⚠";
-        }
+        return "bg-slate-100 text-slate-600 dark:bg-slate-800/70 dark:text-slate-200";
     }
 </script>
 
