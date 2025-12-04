@@ -115,7 +115,12 @@ export async function searchAnime(
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      setApiStatus("error");
+
+      // Don't set API status to "error" for rate limit errors
+      if (response.status !== 429) {
+        setApiStatus("error");
+      }
+
       throw new APIError(
         "Failed to search anime",
         response.status,
@@ -161,7 +166,13 @@ export async function getRecommendation(
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      setApiStatus("error");
+
+      // Don't set API status to "error" for rate limit errors
+      // The rate limit info is already displayed in the badge
+      if (response.status !== 429) {
+        setApiStatus("error");
+      }
+
       throw new APIError(
         "Failed to get recommendation",
         response.status,

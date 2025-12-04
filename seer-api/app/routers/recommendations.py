@@ -54,7 +54,7 @@ def get_recommendation_engine(
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
-@limiter.limit("20/hour")
+@limiter.limit("100/hour")
 async def recommend_anime(
     request: Request,
     body: RecommendRequest,
