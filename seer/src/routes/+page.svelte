@@ -84,12 +84,9 @@
     }
 
     function buildExclusionList() {
-        return Array.from(
-            new Set([
-                ...sessionExcludedIds,
-                ...history.map((item) => item.mal_id),
-            ]),
-        );
+        // Only send session exclusions (temporary dismissals)
+        // Backend extracts history IDs from anime_history, no need to send them twice
+        return sessionExcludedIds;
     }
 
     function handleAnimeSelected(anime: AnimeHistoryItem) {
@@ -112,37 +109,14 @@
         error = null;
 
         try {
-            const maxAttempts = 3;
-            let response: Awaited<ReturnType<typeof getRecommendation>> | null =
-                null;
-            let recommendation: AnimeRecommendation | null = null;
-
-            // Retry a few times if the API returns something we've already seen this session
-            for (let attempt = 0; attempt < maxAttempts; attempt++) {
-                const exclusions = buildExclusionList();
-                response = await getRecommendation(
-                    history,
-                    recommendationMode,
-                    exclusions,
-                );
-                recommendation = response.recommendation ?? null;
-
-                const recId = recommendation?.mal_id ?? null;
-                const alreadyServed =
-                    recId !== null && sessionExcludedIds.includes(recId);
-
-                if (!alreadyServed) {
-                    break;
-                }
-
-                addSessionExclude(recId);
-
-                if (attempt === maxAttempts - 1) {
-                    error =
-                        "Couldn't find a new recommendation right now. Try updating your watchlist.";
-                    return;
-                }
-            }
+            // Get session exclusions (backend already filters by history)
+            const exclusions = buildExclusionList();
+            const response = await getRecommendation(
+                history,
+                recommendationMode,
+                exclusions,
+            );
+            const recommendation = response.recommendation ?? null;
 
             if (!response || !recommendation) {
                 throw new Error("Failed to get recommendation");
@@ -150,7 +124,6 @@
 
             currentRecommendation = recommendation;
             preferenceProfile = response.preference_profile ?? null;
-            addSessionExclude(recommendation.mal_id);
             view = "recommendation";
         } catch (err: any) {
             // Extract detailed error message from APIError
@@ -216,9 +189,8 @@
 
     async function handleNotInterested() {
         if (!currentRecommendation || isLoading) return;
-        const skippedId = currentRecommendation.mal_id;
+        addSessionExclude(currentRecommendation.mal_id);
         handleRating("negative", { watchStatus: "ignored", hasSeen: false });
-        addSessionExclude(skippedId);
         await fetchRecommendation();
     }
 
