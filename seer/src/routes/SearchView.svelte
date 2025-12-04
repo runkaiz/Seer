@@ -26,7 +26,7 @@
     };
 
     async function performSearch(searchQuery: string) {
-        if (searchQuery.length < 2) {
+        if (searchQuery.length < 3) {
             results = [];
             return;
         }
@@ -55,7 +55,7 @@
             clearTimeout(searchTimeout);
         }
 
-        if (trimmedQuery.length < 2) {
+        if (trimmedQuery.length < 3) {
             results = [];
             searchError = null;
             return;
@@ -115,9 +115,9 @@
             <p class="mt-2 text-sm text-red-600 dark:text-red-400">
                 {searchError}
             </p>
-        {:else if trimmedQuery.length > 0 && trimmedQuery.length < 2}
+        {:else if trimmedQuery.length > 0 && trimmedQuery.length < 3}
             <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                Type at least 2 characters to search
+                Type at least 3 characters to search
             </p>
         {/if}
     </div>
