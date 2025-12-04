@@ -90,7 +90,7 @@
         history = [...history, anime];
         resetExclusions();
         if (wasEmpty) {
-            view = "recommendation";
+            view = "watchlist";
         }
     }
 
