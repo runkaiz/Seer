@@ -14,40 +14,51 @@
     const showResetTimer = $derived(
         !!rateLimitInfo && rateLimitInfo.remaining < rateLimitInfo.limit,
     );
-    const statusText = $derived(() => {
-        if (rateLimitInfo) {
-            return `${rateLimitInfo.remaining}/${rateLimitInfo.limit} requests`;
-        }
-        if (apiStatus?.status === "ok") return "API connected";
-        if (apiStatus?.status === "error") return "API error";
-        return "API status: waiting";
-    });
-    const statusTitle = $derived(() => {
-        if (rateLimitInfo) return "API rate limit status";
-        if (apiStatus?.status === "ok")
-            return "API responded successfully (no limit data provided)";
-        if (apiStatus?.status === "error")
-            return "Recent API request failed; check backend";
-        return "Awaiting API response";
-    });
-    const statusIcon = $derived(() => {
-        if (rateLimitInfo) {
-            const percentage =
-                (rateLimitInfo.remaining / rateLimitInfo.limit) * 100;
-
-            if (percentage > 50) {
-                return "✓";
-            } else if (percentage > 25) {
-                return "⚠";
-            } else {
-                return "⚠";
+    const hasStatus = $derived(
+        !!rateLimitInfo ||
+            apiStatus?.status === "ok" ||
+            apiStatus?.status === "error",
+    );
+    const statusText = $derived(
+        (() => {
+            if (rateLimitInfo) {
+                return `${rateLimitInfo.remaining}/${rateLimitInfo.limit} requests`;
             }
-        }
+            if (apiStatus?.status === "ok") return "API connected";
+            if (apiStatus?.status === "error") return "API error";
+            return "";
+        })(),
+    );
+    const statusTitle = $derived(
+        (() => {
+            if (rateLimitInfo) return "API rate limit status";
+            if (apiStatus?.status === "ok")
+                return "API responded successfully (no limit data provided)";
+            if (apiStatus?.status === "error")
+                return "Recent API request failed; check backend";
+            return "";
+        })(),
+    );
+    const statusIcon = $derived(
+        (() => {
+            if (rateLimitInfo) {
+                const percentage =
+                    (rateLimitInfo.remaining / rateLimitInfo.limit) * 100;
 
-        if (apiStatus?.status === "ok") return "✓";
-        if (apiStatus?.status === "error") return "⚠";
-        return "ⓘ";
-    });
+                if (percentage > 50) {
+                    return "✓";
+                } else if (percentage > 25) {
+                    return "⚠";
+                } else {
+                    return "⚠";
+                }
+            }
+
+            if (apiStatus?.status === "ok") return "✓";
+            if (apiStatus?.status === "error") return "⚠";
+            return "";
+        })(),
+    );
 
     function updateIndicatorInfo() {
         rateLimitInfo = getRateLimitInfo();
@@ -118,13 +129,15 @@
     }
 </script>
 
-<div
-    class={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${getStatusColor()}`}
-    title={statusTitle}
->
-    <span>{statusIcon}</span>
-    <span>{statusText}</span>
-    {#if showResetTimer}
-        <span class="opacity-75">• {timeUntilReset}</span>
-    {/if}
-</div>
+{#if hasStatus}
+    <div
+        class={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${getStatusColor()}`}
+        title={statusTitle}
+    >
+        <span>{statusIcon}</span>
+        <span>{statusText}</span>
+        {#if showResetTimer}
+            <span class="opacity-75">• {timeUntilReset}</span>
+        {/if}
+    </div>
+{/if}
