@@ -145,7 +145,7 @@
 
 {#if hasStatus}
     <div
-        class={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${getStatusColor()}`}
+        class={`hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${getStatusColor()}`}
         title={statusTitle}
     >
         <span>{statusIcon}</span>
