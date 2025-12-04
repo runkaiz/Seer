@@ -32,7 +32,7 @@
         "search",
     );
     let recommendationMode = $state<RecommendationMode>("explore");
-    let excludeIds = $state<number[]>([]);
+    let sessionExcludedIds = $state<number[]>([]);
 
     const modeOptions: {
         id: RecommendationMode;
@@ -72,14 +72,24 @@
         }
     });
 
-    function resetExclusions() {
-        excludeIds = [];
+    function resetSessionExclusions() {
+        sessionExcludedIds = [];
     }
 
-    function addExcludeId(id: number) {
-        const next = new Set(excludeIds);
+    function addSessionExclude(id: number | null | undefined) {
+        if (!id) return;
+        const next = new Set(sessionExcludedIds);
         next.add(id);
-        excludeIds = Array.from(next).slice(-20);
+        sessionExcludedIds = Array.from(next).slice(-200);
+    }
+
+    function buildExclusionList() {
+        return Array.from(
+            new Set([
+                ...sessionExcludedIds,
+                ...history.map((item) => item.mal_id),
+            ]),
+        );
     }
 
     function handleAnimeSelected(anime: AnimeHistoryItem) {
@@ -89,8 +99,8 @@
         if (alreadyExists) return;
         const wasEmpty = history.length === 0;
         history = [...history, anime];
-        resetExclusions();
         if (wasEmpty) {
+            resetSessionExclusions();
             view = "watchlist";
         }
     }
@@ -102,13 +112,45 @@
         error = null;
 
         try {
-            const response = await getRecommendation(
-                history,
-                recommendationMode,
-                excludeIds,
-            );
-            currentRecommendation = response.recommendation;
+            const maxAttempts = 3;
+            let response: Awaited<ReturnType<typeof getRecommendation>> | null =
+                null;
+            let recommendation: AnimeRecommendation | null = null;
+
+            // Retry a few times if the API returns something we've already seen this session
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                const exclusions = buildExclusionList();
+                response = await getRecommendation(
+                    history,
+                    recommendationMode,
+                    exclusions,
+                );
+                recommendation = response.recommendation ?? null;
+
+                const recId = recommendation?.mal_id ?? null;
+                const alreadyServed =
+                    recId !== null && sessionExcludedIds.includes(recId);
+
+                if (!alreadyServed) {
+                    break;
+                }
+
+                addSessionExclude(recId);
+
+                if (attempt === maxAttempts - 1) {
+                    error =
+                        "Couldn't find a new recommendation right now. Try updating your watchlist.";
+                    return;
+                }
+            }
+
+            if (!response || !recommendation) {
+                throw new Error("Failed to get recommendation");
+            }
+
+            currentRecommendation = recommendation;
             preferenceProfile = response.preference_profile ?? null;
+            addSessionExclude(recommendation.mal_id);
             view = "recommendation";
         } catch (err: any) {
             // Extract detailed error message from APIError
@@ -152,7 +194,6 @@
 
         history = [...history, ratedAnime];
         currentRecommendation = null;
-        resetExclusions();
     }
 
     function handleAddToWatchlist() {
@@ -167,7 +208,6 @@
 
         history = [...history, queuedAnime];
         currentRecommendation = null;
-        resetExclusions();
     }
 
     function handleAlreadyWatched(rating: "positive" | "neutral" | "negative") {
@@ -178,13 +218,13 @@
         if (!currentRecommendation || isLoading) return;
         const skippedId = currentRecommendation.mal_id;
         handleRating("negative", { watchStatus: "ignored", hasSeen: false });
-        addExcludeId(skippedId);
+        addSessionExclude(skippedId);
         await fetchRecommendation();
     }
 
     async function handleRegenerate() {
         if (currentRecommendation) {
-            addExcludeId(currentRecommendation.mal_id);
+            addSessionExclude(currentRecommendation.mal_id);
         }
         await fetchRecommendation();
     }
@@ -203,7 +243,7 @@
             history = importedHistory;
             saveHistory(history);
             view = "watchlist";
-            resetExclusions();
+            resetSessionExclusions();
         } catch (err) {
             error =
                 err instanceof Error
@@ -219,7 +259,7 @@
             currentRecommendation = null;
             preferenceProfile = null;
             clearHistory();
-            resetExclusions();
+            resetSessionExclusions();
             view = "search";
         }
     }
