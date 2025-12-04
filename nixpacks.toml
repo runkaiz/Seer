@@ -5,12 +5,12 @@ aptPkgs = ["gcc", "g++"]
 [phases.install]
 cmds = [
     "npm install -g pnpm",
-    "cd seer && pnpm install",
+    "cd seer && /usr/local/bin/pnpm install",
     "cd seer-api && pip install -r requirements.txt"
 ]
 
 [phases.build]
-cmds = ["cd seer && pnpm run build"]
+cmds = ["cd seer && /usr/local/bin/pnpm run build"]
 
 [start]
 cmd = "cd seer-api && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
