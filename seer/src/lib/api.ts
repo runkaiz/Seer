@@ -25,6 +25,34 @@ export class APIError extends Error {
   }
 }
 
+export interface RateLimitInfo {
+  limit: number;
+  remaining: number;
+  reset: number;
+}
+
+// Store for rate limit info
+let currentRateLimitInfo: RateLimitInfo | null = null;
+
+export function getRateLimitInfo(): RateLimitInfo | null {
+  return currentRateLimitInfo;
+}
+
+function parseRateLimitHeaders(headers: Headers): RateLimitInfo | null {
+  const limit = headers.get("X-RateLimit-Limit");
+  const remaining = headers.get("X-RateLimit-Remaining");
+  const reset = headers.get("X-RateLimit-Reset");
+
+  if (limit && remaining && reset) {
+    return {
+      limit: parseInt(limit, 10),
+      remaining: parseInt(remaining, 10),
+      reset: parseInt(reset, 10),
+    };
+  }
+  return null;
+}
+
 /**
  * Search for anime by title
  */
@@ -70,6 +98,12 @@ export async function getRecommendation(
       exclude_ids: excludeIds,
     }),
   });
+
+  // Parse and store rate limit info
+  const rateLimitInfo = parseRateLimitHeaders(response.headers);
+  if (rateLimitInfo) {
+    currentRateLimitInfo = rateLimitInfo;
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));

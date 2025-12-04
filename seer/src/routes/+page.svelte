@@ -20,6 +20,7 @@
     import RecommendationView from "./RecommendationView.svelte";
     import WatchlistView from "./WatchlistView.svelte";
     import PhilosophyView from "./PhilosophyView.svelte";
+    import RateLimitIndicator from "$lib/components/RateLimitIndicator.svelte";
 
     // State
     let history = $state<AnimeHistoryItem[]>([]);
@@ -261,6 +262,7 @@
                     >
                         Seer
                     </h1>
+                    <RateLimitIndicator />
                 </div>
 
                 <div class="flex items-center gap-1 sm:gap-2">
@@ -270,7 +272,7 @@
                                 history.length > 0
                                     ? "recommendation"
                                     : "search")}
-                        class="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        class="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                         class:bg-slate-100={view === "recommendation" ||
                             view === "search"}
                         class:dark:bg-slate-800={view === "recommendation" ||
@@ -280,7 +282,7 @@
                     </button>
                     <button
                         onclick={() => (view = "watchlist")}
-                        class="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        class="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                         class:bg-slate-100={view === "watchlist"}
                         class:dark:bg-slate-800={view === "watchlist"}
                     >
@@ -290,7 +292,7 @@
                     </button>
                     <button
                         onclick={() => (view = "philosophy")}
-                        class="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        class="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                         class:bg-slate-100={view === "philosophy"}
                         class:dark:bg-slate-800={view === "philosophy"}
                     >
@@ -299,12 +301,12 @@
                     <button
                         onclick={handleExport}
                         disabled={history.length === 0}
-                        class="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Export
                     </button>
                     <label
-                        class="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        class="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     >
                         Import
                         <input

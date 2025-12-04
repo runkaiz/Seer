@@ -4,8 +4,9 @@ Stateless REST API endpoints for anime recommendations.
 Author: Runkai Zhang
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
+from app.limiter import limiter
 from app.schemas import (
     ErrorResponse,
     RecommendRequest,
@@ -46,11 +47,17 @@ def get_recommendation_engine(
             "model": ErrorResponse,
             "description": "anime_history is required and must contain at least one anime",
         },
+        429: {
+            "model": ErrorResponse,
+            "description": "Rate limit exceeded - please try again later",
+        },
         500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
+@limiter.limit("20/hour")
 async def recommend_anime(
-    request: RecommendRequest,
+    request: Request,
+    body: RecommendRequest,
     engine: RecommendationEngine = Depends(get_recommendation_engine),
 ):
     """
@@ -96,12 +103,14 @@ async def recommend_anime(
 
     **Note:** Minimum required fields per anime are `mal_id`, `title`, `has_seen`, and optionally `rating`.
     More complete metadata improves recommendation quality.
+
+    **Rate Limits:** 20 recommendations per hour per IP address to prevent API abuse.
     """
     try:
         result = await engine.get_recommendation(
-            anime_history=request.anime_history,
-            mode=request.mode,
-            exclude_ids=request.exclude_ids,
+            anime_history=body.anime_history,
+            mode=body.mode,
+            exclude_ids=body.exclude_ids,
         )
 
         return RecommendResponse(recommendation=result["recommendation"])

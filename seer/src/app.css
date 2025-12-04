@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+/* Base theme colors so unstyled text matches light/dark backgrounds */
+:root {
+    color: #0f172a;
+    background-color: #f8fafc;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        color: #e2e8f0;
+        background-color: #0b1220;
+    }
+}
+
+body {
+    min-height: 100vh;
+    background-color: inherit;
+}
+
 /* Smooth transitions */
 @keyframes fadeIn {
     from {

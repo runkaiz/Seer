@@ -47,8 +47,12 @@ class OpenAIRecommendationClient:
         liked_anime = [h for h in anime_history if h.get("user_rating") == "positive"]
 
         # Format for prompt
-        candidates_text = self._format_candidates(candidates[:12])
-        liked_text = self._build_history_context(liked_anime[-3:])  # Recent likes
+        candidates_text = self._format_candidates(
+            candidates[:20]
+        )  # Increased from 12 to 20
+        liked_text = self._build_history_context(
+            liked_anime[-8:]
+        )  # Increased from 3 to 8
 
         prompt = f"""You are an anime recommender finding similar anime to what the user loves.
 
@@ -135,8 +139,12 @@ Return ONLY the JSON object."""
             return None
 
         # Format for prompt
-        candidates_text = self._format_candidates(candidates[:12])
-        history_text = self._build_history_context(anime_history[-5:])  # Recent history
+        candidates_text = self._format_candidates(
+            candidates[:20]
+        )  # Increased from 12 to 20
+        history_text = self._build_history_context(
+            anime_history[-10:]
+        )  # Increased from 5 to 10
 
         prompt = f"""You are an anime curator focused on expanding horizons and discovery.
 
