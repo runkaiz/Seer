@@ -39,6 +39,11 @@ export type ApiStatus = {
 // Store for rate limit info
 let currentRateLimitInfo: RateLimitInfo | null = null;
 let currentApiStatus: ApiStatus = { status: "unknown", updatedAt: 0 };
+type ApiStatusListener = (status: ApiStatus) => void;
+type RateLimitListener = (info: RateLimitInfo | null) => void;
+
+const apiStatusListeners = new Set<ApiStatusListener>();
+const rateLimitListeners = new Set<RateLimitListener>();
 
 export function getRateLimitInfo(): RateLimitInfo | null {
   return currentRateLimitInfo;
@@ -48,8 +53,34 @@ export function getApiStatus(): ApiStatus {
   return currentApiStatus;
 }
 
+export function subscribeToApiStatus(listener: ApiStatusListener) {
+  apiStatusListeners.add(listener);
+  listener(currentApiStatus);
+  return () => apiStatusListeners.delete(listener);
+}
+
+export function subscribeToRateLimitInfo(listener: RateLimitListener) {
+  rateLimitListeners.add(listener);
+  listener(currentRateLimitInfo);
+  return () => rateLimitListeners.delete(listener);
+}
+
+function notifyApiStatusListeners() {
+  apiStatusListeners.forEach((listener) => listener(currentApiStatus));
+}
+
+function notifyRateLimitListeners() {
+  rateLimitListeners.forEach((listener) => listener(currentRateLimitInfo));
+}
+
 function setApiStatus(status: ApiStatus["status"]) {
   currentApiStatus = { status, updatedAt: Date.now() };
+  notifyApiStatusListeners();
+}
+
+function setRateLimitInfo(info: RateLimitInfo | null) {
+  currentRateLimitInfo = info;
+  notifyRateLimitListeners();
 }
 
 function parseRateLimitHeaders(headers: Headers): RateLimitInfo | null {
@@ -125,7 +156,7 @@ export async function getRecommendation(
     // Parse and store rate limit info
     const rateLimitInfo = parseRateLimitHeaders(response.headers);
     if (rateLimitInfo) {
-      currentRateLimitInfo = rateLimitInfo;
+      setRateLimitInfo(rateLimitInfo);
     }
 
     if (!response.ok) {

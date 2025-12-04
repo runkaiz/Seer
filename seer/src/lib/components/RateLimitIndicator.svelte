@@ -3,6 +3,8 @@
     import {
         getApiStatus,
         getRateLimitInfo,
+        subscribeToApiStatus,
+        subscribeToRateLimitInfo,
         type ApiStatus,
         type RateLimitInfo,
     } from "$lib/api";
@@ -10,7 +12,9 @@
     let rateLimitInfo = $state<RateLimitInfo | null>(null);
     let apiStatus = $state<ApiStatus | null>(null);
     let timeUntilReset = $state<string>("");
-    let interval: ReturnType<typeof setInterval> | null = null;
+    let resetTimerInterval: ReturnType<typeof setInterval> | null = null;
+    let unsubscribeApiStatus: (() => void) | null = null;
+    let unsubscribeRateLimitInfo: (() => void) | null = null;
     const showResetTimer = $derived(
         !!rateLimitInfo && rateLimitInfo.remaining < rateLimitInfo.limit,
     );
@@ -71,7 +75,10 @@
     }
 
     function updateTimeUntilReset() {
-        if (!rateLimitInfo) return;
+        if (!rateLimitInfo) {
+            timeUntilReset = "";
+            return;
+        }
 
         const now = Math.floor(Date.now() / 1000);
         const secondsLeft = rateLimitInfo.reset - now;
@@ -88,21 +95,28 @@
 
     onMount(() => {
         updateIndicatorInfo();
-        // Update every 10 seconds
-        interval = setInterval(() => {
-            updateIndicatorInfo();
-        }, 10000);
+
+        unsubscribeApiStatus = subscribeToApiStatus((status) => {
+            apiStatus = status;
+        });
+
+        unsubscribeRateLimitInfo = subscribeToRateLimitInfo((info) => {
+            rateLimitInfo = info;
+            updateTimeUntilReset();
+        });
+
+        // Keep the reset timer display fresh
+        resetTimerInterval = setInterval(() => {
+            updateTimeUntilReset();
+        }, 1000);
     });
 
     onDestroy(() => {
-        if (interval) {
-            clearInterval(interval);
+        if (resetTimerInterval) {
+            clearInterval(resetTimerInterval);
         }
-    });
-
-    $effect(() => {
-        // Update immediately when rate limit info changes
-        updateIndicatorInfo();
+        if (unsubscribeApiStatus) unsubscribeApiStatus();
+        if (unsubscribeRateLimitInfo) unsubscribeRateLimitInfo();
     });
 
     function getStatusColor() {
