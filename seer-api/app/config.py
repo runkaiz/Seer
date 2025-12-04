@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     ]
 
     # OpenAI Settings
-    openai_model: str = "gpt-5-thinking"
+    openai_model: str = "gpt-5.1"
     max_candidates: int = 10
 
     class Config:
@@ -40,4 +40,12 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings() -> Settings:
     """Get cached settings instance."""
-    return Settings()
+    try:
+        return Settings()
+    except Exception as e:
+        print(
+            f"ERROR: Failed to load settings. Make sure environment variables are set!"
+        )
+        print(f"Required: OPENAI_API_KEY, MAL_CLIENT_ID")
+        print(f"Error: {e}")
+        raise

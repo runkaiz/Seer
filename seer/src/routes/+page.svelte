@@ -391,7 +391,9 @@
                     <div class="flex flex-col gap-2">
                         <button
                             type="button"
-                            onclick={fetchRecommendation}
+                            onclick={currentRecommendation
+                                ? handleRegenerate
+                                : fetchRecommendation}
                             disabled={history.length === 0 || isLoading}
                             class="px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
                         >
