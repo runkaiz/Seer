@@ -1,7 +1,7 @@
 # Seer - Anime Recommendation System
 
 **Author:** Runkai (Nico) Zhang  
-**Course:** HCDE 310
+**Course:** HCDE 310  
 **Video Showcase:** [Watch this](https://youtu.be/AAmp2Xbgrh8)
 
 A minimalistic anime recommendation system that encourages users to explore beyond their comfort zone. Seer combines MyAnimeList data with AI-powered personalization to help you discover anime you wouldn't normally find.
