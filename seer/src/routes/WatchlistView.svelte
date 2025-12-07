@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { AnimeHistoryItem, UserRating, WatchStatus } from "$lib/types";
+    import { getRatingEmoji, ratingOptions } from "$lib/utils";
 
     interface Props {
         history: AnimeHistoryItem[];
@@ -13,20 +14,6 @@
         $props();
 
     let filterStatus = $state<WatchStatus | "all">("all");
-
-    function getRatingEmoji(rating: string | null): string {
-        if (rating === "positive") return "👍";
-        if (rating === "neutral") return "🤔";
-        if (rating === "negative") return "👎";
-        return "—";
-    }
-
-    function getRatingColor(rating: string | null): string {
-        if (rating === "positive") return "text-green-600 dark:text-green-400";
-        if (rating === "neutral") return "text-slate-600 dark:text-slate-400";
-        if (rating === "negative") return "text-red-600 dark:text-red-400";
-        return "text-slate-400";
-    }
 
     // Reverse history for display (newest first) with original indices
     let displayHistory = $derived(
@@ -68,13 +55,6 @@
         ignored:
             "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
     };
-
-    const ratingOptions: { value: UserRating; emoji: string; label: string }[] =
-        [
-            { value: "positive", emoji: "🙂", label: "Loved it" },
-            { value: "neutral", emoji: "😐", label: "It was fine" },
-            { value: "negative", emoji: "🤮", label: "Hard pass" },
-        ];
 </script>
 
 <div class="max-w-4xl mx-auto">

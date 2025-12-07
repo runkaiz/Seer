@@ -8,6 +8,7 @@ Supports two modes:
 Author: Runkai Zhang
 """
 
+import asyncio
 from typing import Any, Dict, List, Optional
 
 from app.schemas import AnimeHistoryItem, RecommendationMode
@@ -119,17 +120,27 @@ class RecommendationEngine:
             recs = await self.mal_client.get_anime_recommendations(
                 most_recent["mal_id"], limit=4
             )
+            # Collect valid anime IDs for parallel fetching
+            rec_ids = []
             for rec in recs:
                 anime_id = rec.get("node", {}).get("id")
                 if (
                     anime_id
                     and anime_id not in seen_ids_set
-                    and not any(c["mal_id"] == anime_id for c in candidates)
+                    and anime_id not in rec_ids
                 ):
-                    details = await self.mal_client.get_anime_details(anime_id)
-                    candidates.append(self.mal_client.extract_metadata(details))
-                    if len(candidates) >= 4:
+                    rec_ids.append(anime_id)
+                    if len(rec_ids) >= 4:
                         break
+
+            # Fetch all details in parallel
+            if rec_ids:
+                details_list = await asyncio.gather(
+                    *[self.mal_client.get_anime_details(aid) for aid in rec_ids]
+                )
+                for details in details_list:
+                    if details:
+                        candidates.append(self.mal_client.extract_metadata(details))
 
         # Strategy 2: Exploratory - high-rated anime from MAL rankings (67%)
         ranking = await self.mal_client.search_by_genre([], limit=12)

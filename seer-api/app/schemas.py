@@ -95,6 +95,5 @@ class RecommendResponse(BaseModel):
 class ErrorResponse(BaseModel):
     """Error response schema."""
 
-    """Error response schema."""
     error: str
     detail: Optional[str] = None

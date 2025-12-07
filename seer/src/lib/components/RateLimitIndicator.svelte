@@ -43,24 +43,39 @@
             return "";
         })(),
     );
+    const rateLimitPercentage = $derived(
+        rateLimitInfo
+            ? (rateLimitInfo.remaining / rateLimitInfo.limit) * 100
+            : null,
+    );
     const statusIcon = $derived(
         (() => {
-            if (rateLimitInfo) {
-                const percentage =
-                    (rateLimitInfo.remaining / rateLimitInfo.limit) * 100;
-
-                if (percentage > 50) {
-                    return "✓";
-                } else if (percentage > 25) {
-                    return "⚠";
-                } else {
-                    return "⚠";
-                }
+            if (rateLimitPercentage !== null) {
+                return rateLimitPercentage > 50 ? "✓" : "⚠";
             }
-
             if (apiStatus?.status === "ok") return "✓";
             if (apiStatus?.status === "error") return "⚠";
             return "";
+        })(),
+    );
+    const statusColor = $derived(
+        (() => {
+            if (rateLimitPercentage !== null) {
+                if (rateLimitPercentage > 50) {
+                    return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300";
+                } else if (rateLimitPercentage > 25) {
+                    return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300";
+                } else {
+                    return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
+                }
+            }
+            if (apiStatus?.status === "ok") {
+                return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300";
+            }
+            if (apiStatus?.status === "error") {
+                return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
+            }
+            return "bg-slate-100 text-slate-600 dark:bg-slate-800/70 dark:text-slate-200";
         })(),
     );
 
@@ -118,34 +133,11 @@
         if (unsubscribeApiStatus) unsubscribeApiStatus();
         if (unsubscribeRateLimitInfo) unsubscribeRateLimitInfo();
     });
-
-    function getStatusColor() {
-        if (rateLimitInfo) {
-            const percentage =
-                (rateLimitInfo.remaining / rateLimitInfo.limit) * 100;
-
-            if (percentage > 50) {
-                return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300";
-            } else if (percentage > 25) {
-                return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300";
-            } else {
-                return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
-            }
-        }
-
-        if (apiStatus?.status === "ok") {
-            return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300";
-        }
-        if (apiStatus?.status === "error") {
-            return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
-        }
-        return "bg-slate-100 text-slate-600 dark:bg-slate-800/70 dark:text-slate-200";
-    }
 </script>
 
 {#if hasStatus}
     <div
-        class={`hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${getStatusColor()}`}
+        class={`hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${statusColor}`}
         title={statusTitle}
     >
         <span>{statusIcon}</span>

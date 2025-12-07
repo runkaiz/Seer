@@ -4,9 +4,13 @@ Stateless REST API endpoints for anime recommendations.
 Author: Runkai Zhang
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.limiter import limiter
+
+logger = logging.getLogger(__name__)
 from app.schemas import (
     ErrorResponse,
     RecommendRequest,
@@ -118,11 +122,7 @@ async def recommend_anime(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
-        # Log the full error for debugging
-        import traceback
-
-        print(f"Error generating recommendation: {str(e)}")
-        print(traceback.format_exc())
+        logger.exception("Error generating recommendation: %s", e)
 
         # Return user-friendly error message
         error_msg = str(e)
