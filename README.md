@@ -21,8 +21,28 @@ Rather than reinforcing existing preferences, Seer bridges your comfort zone wit
 
 - Node.js 18+ (with pnpm: `npm install -g pnpm`)
 - Python 3.10+
-- [OpenAI API Key](https://platform.openai.com/api-keys)
-- [MyAnimeList Client ID](https://myanimelist.net/apiconfig)
+- OpenAI API Key
+- MyAnimeList Client ID
+
+### Getting API Keys
+
+**OpenAI API Key:**
+1. Go to [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Sign in or create an account
+3. Click "Create new secret key"
+4. Copy the key (it won't be shown again)
+
+**MyAnimeList Client ID:**
+1. Go to [MyAnimeList API Config](https://myanimelist.net/apiconfig)
+2. Sign in or create a MyAnimeList account
+3. Click "Create ID"
+4. Fill in the form:
+   - App Name: Any name (e.g., "Seer")
+   - App Type: "web"
+   - App Description: Any description
+   - App Redirect URL: `http://localhost:5173` (or any valid URL)
+   - Homepage URL: Optional
+5. Submit and copy your Client ID
 
 ### Installation
 
