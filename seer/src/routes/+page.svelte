@@ -3,7 +3,6 @@
     import type {
         AnimeHistoryItem,
         AnimeRecommendation,
-        PreferenceProfile,
         RecommendationMode,
         WatchStatus,
     } from "$lib/types";
@@ -25,7 +24,6 @@
     // State
     let history = $state<AnimeHistoryItem[]>([]);
     let currentRecommendation = $state<AnimeRecommendation | null>(null);
-    let preferenceProfile = $state<PreferenceProfile | null>(null);
     let isLoading = $state(false);
     let error = $state<string | null>(null);
     let view = $state<"search" | "recommendation" | "watchlist" | "philosophy">(
@@ -123,7 +121,6 @@
             }
 
             currentRecommendation = recommendation;
-            preferenceProfile = response.preference_profile ?? null;
             view = "recommendation";
         } catch (err: any) {
             // Extract detailed error message from APIError
@@ -229,7 +226,6 @@
         if (confirm("Are you sure you want to clear your entire watchlist?")) {
             history = [];
             currentRecommendation = null;
-            preferenceProfile = null;
             clearHistory();
             resetSessionExclusions();
             view = "search";
@@ -452,7 +448,6 @@
             <div class="animate-fade-in">
                 <RecommendationView
                     recommendation={currentRecommendation}
-                    {preferenceProfile}
                     onAddToWatchlist={handleAddToWatchlist}
                     onAlreadyWatched={handleAlreadyWatched}
                     onNotInterested={handleNotInterested}

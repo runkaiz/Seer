@@ -31,23 +31,12 @@ export interface AnimeHistoryItem extends AnimeBase {
   watch_status: WatchStatus;
 }
 
-export interface PreferenceProfile {
-  preferred_genres: string[];
-  preferred_themes: string[];
-  avoided_genres: string[];
-  avoided_themes: string[];
-  preferred_episode_range: string | null;
-  preferred_demographics: string[];
-  content_notes: string;
-}
-
 export interface AnimeRecommendation extends AnimeBase {
   recommendation_reason: string;
 }
 
 export interface RecommendResponse {
   recommendation: AnimeRecommendation;
-  preference_profile?: PreferenceProfile;
 }
 
 export interface SearchResponse {

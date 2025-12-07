@@ -2,16 +2,15 @@
     import { onDestroy } from "svelte";
     import type {
         AnimeRecommendation,
-        PreferenceProfile,
         RecommendationMode,
         UserRating,
     } from "$lib/types";
+    import { ratingOptions } from "$lib/utils";
 
     type DetailItem = { label: string; value: string };
 
     interface Props {
         recommendation: AnimeRecommendation | null;
-        preferenceProfile: PreferenceProfile | null;
         onRegenerate: () => void;
         onAddToWatchlist: () => void;
         onAlreadyWatched: (rating: UserRating) => void;
@@ -21,7 +20,6 @@
 
     let {
         recommendation,
-        preferenceProfile,
         onRegenerate,
         onAddToWatchlist,
         onAlreadyWatched,
@@ -29,21 +27,10 @@
         mode,
     }: Props = $props();
 
-    let showPreferences = $state(false);
     let showDetails = $state(false);
     let showWatchedRating = $state(false);
     let isDismissing = $state(false);
     let dismissTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    const watchedRatingOptions: {
-        icon: string;
-        label: string;
-        value: UserRating;
-    }[] = [
-        { icon: "🙂", label: "Loved it", value: "positive" },
-        { icon: "😐", label: "It was ok", value: "neutral" },
-        { icon: "🤮", label: "Not for me", value: "negative" },
-    ];
 
     const modeCopy: Record<
         RecommendationMode,
@@ -345,14 +332,14 @@
                         <div
                             class="flex flex-wrap items-center justify-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white/80 dark:bg-slate-900/40 p-3 text-sm"
                         >
-                            {#each watchedRatingOptions as option}
+                            {#each ratingOptions as option}
                                 <button
                                     type="button"
                                     onclick={() =>
                                         handleWatchedRatingSelect(option.value)}
                                     class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-slate-700 dark:text-slate-200"
                                 >
-                                    <span class="text-2xl">{option.icon}</span>
+                                    <span class="text-2xl">{option.emoji}</span>
                                     <span class="text-xs">{option.label}</span>
                                 </button>
                             {/each}
@@ -389,110 +376,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Preference Profile Toggle -->
-        {#if preferenceProfile}
-            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
-                <button
-                    onclick={() => (showPreferences = !showPreferences)}
-                    class="w-full flex items-center justify-between text-left"
-                >
-                    <h3
-                        class="text-lg font-semibold text-slate-900 dark:text-slate-100"
-                    >
-                        Your Taste Profile
-                    </h3>
-                    <svg
-                        class="w-5 h-5 text-slate-500 transition-transform"
-                        class:rotate-180={showPreferences}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M19 9l-7 7-7-7"
-                        />
-                    </svg>
-                </button>
-
-                {#if showPreferences}
-                    <div class="mt-4 space-y-4 text-sm">
-                        {#if preferenceProfile.preferred_genres.length > 0}
-                            <div>
-                                <h4
-                                    class="font-medium text-slate-700 dark:text-slate-300 mb-2"
-                                >
-                                    Preferred Genres
-                                </h4>
-                                <div class="flex flex-wrap gap-2">
-                                    {#each preferenceProfile.preferred_genres as genre}
-                                        <span
-                                            class="px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                                        >
-                                            {genre}
-                                        </span>
-                                    {/each}
-                                </div>
-                            </div>
-                        {/if}
-
-                        {#if preferenceProfile.preferred_themes.length > 0}
-                            <div>
-                                <h4
-                                    class="font-medium text-slate-700 dark:text-slate-300 mb-2"
-                                >
-                                    Preferred Themes
-                                </h4>
-                                <div class="flex flex-wrap gap-2">
-                                    {#each preferenceProfile.preferred_themes as theme}
-                                        <span
-                                            class="px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                                        >
-                                            {theme}
-                                        </span>
-                                    {/each}
-                                </div>
-                            </div>
-                        {/if}
-
-                        {#if preferenceProfile.avoided_genres.length > 0}
-                            <div>
-                                <h4
-                                    class="font-medium text-slate-700 dark:text-slate-300 mb-2"
-                                >
-                                    Avoiding
-                                </h4>
-                                <div class="flex flex-wrap gap-2">
-                                    {#each preferenceProfile.avoided_genres as genre}
-                                        <span
-                                            class="px-2 py-1 rounded-md bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-                                        >
-                                            {genre}
-                                        </span>
-                                    {/each}
-                                </div>
-                            </div>
-                        {/if}
-
-                        {#if preferenceProfile.content_notes}
-                            <div>
-                                <h4
-                                    class="font-medium text-slate-700 dark:text-slate-300 mb-2"
-                                >
-                                    Notes
-                                </h4>
-                                <p class="text-slate-600 dark:text-slate-400">
-                                    {preferenceProfile.content_notes}
-                                </p>
-                            </div>
-                        {/if}
-                    </div>
-                {/if}
-            </div>
-        {/if}
     </div>
 {:else}
     <div class="max-w-2xl mx-auto text-center py-12">
@@ -508,10 +391,6 @@
 {/if}
 
 <style>
-    .rotate-180 {
-        transform: rotate(180deg);
-    }
-
     .recommendation-card {
         transition:
             opacity 200ms ease,
